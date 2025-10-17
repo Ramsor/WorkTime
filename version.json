@@ -1,6 +1,6 @@
 {
     "version": "3.1.1",
     "changelog": "- Добавлена система автоматических обновлений\n- Исправлены ошибки отображения дат\n- Улучшена производительность",
-    "download_url": "https://github.com/Ramsor/WorkTime/releases/download/v3.1.1/WorkTime_v3.1.1.zip",
+    "download_url": "https://github.com/Ramsor/WorkTime/releases/download/v3.1.1/WorkTime_v3.1.0.zip",
     "size": "119 MB"
 }
