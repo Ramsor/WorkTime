@@ -29,7 +29,7 @@ jobs:
         
     - name: Build executable
       run: |
-        pyinstaller --onefile --windowed --name "WorkTime" --add-data "config;config" work_time3.1.0.py
+        pyinstaller --onefile --windowed --name "WorkTime" work_time3.1.0.py
         
     - name: Verify executable
       run: |
