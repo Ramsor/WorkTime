@@ -1,0 +1,40 @@
+name: Build and Release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        pip install pyinstaller
+        pip install -r requirements.txt
+        
+    - name: Build executable
+      run: |
+        pyinstaller --onefile --windowed --name "WorkTime" work_time3.1.0.py
+        
+    - name: Create release package
+      run: |
+        mkdir release_package
+        copy dist\WorkTime.exe release_package\
+        copy version.json release_package\
+        cd release_package
+        7z a ../WorkTime_v${{ github.ref_name }}.zip *
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: WorkTime_v${{ github.ref_name }}.zip
+        body_path: CHANGELOG.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
