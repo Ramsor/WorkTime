@@ -1,40 +1,59 @@
 name: Build and Release
+
 on:
   push:
-    tags: ['v*']
+    tags: ['v*.*.*']
 
 jobs:
   build:
     runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v3
     
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+        cache: 'pip'
         
     - name: Install dependencies
       run: |
-        pip install pyinstaller
         pip install -r requirements.txt
         
     - name: Build executable
       run: |
-        pyinstaller --onefile --windowed --name "WorkTime" work_time3.1.0.py
+        pyinstaller --onefile --windowed --name "WorkTime" --add-data "config/*;config/" work_time3.1.0.py
+        
+    - name: Test executable
+      run: |
+        # Проверяем что EXE файл создан
+        if exist dist\WorkTime.exe (
+          echo "EXE файл успешно создан"
+        ) else (
+          echo "Ошибка: EXE файл не найден"
+          exit 1
+        )
         
     - name: Create release package
       run: |
-        mkdir release_package
-        copy dist\WorkTime.exe release_package\
-        copy version.json release_package\
-        cd release_package
-        7z a ../WorkTime_v${{ github.ref_name }}.zip *
+        $version = "${{ github.ref_name }}" -replace 'v',''
+        mkdir "WorkTime_$version"
+        copy dist\WorkTime.exe "WorkTime_$version"
+        if exist config (xcopy config "WorkTime_$version\config" /E /I)
+        copy README.md "WorkTime_$version"
+        7z a "WorkTime_$version.zip" "WorkTime_$version\*"
         
-    - name: Create Release
+    - name: Upload release
       uses: softprops/action-gh-release@v1
       with:
-        files: WorkTime_v${{ github.ref_name }}.zip
-        body_path: CHANGELOG.md
+        files: WorkTime_*.zip
+        body: |
+          Автоматически собранная версия ${{ github.ref_name }}
+          
+          Изменения:
+          - Обновление системы обновлений
+          - Улучшена производительность
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
