@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release WorkTime
 
 on:
   push:
@@ -16,34 +16,36 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-        cache: 'pip'
         
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install PyQt6 matplotlib
         
     - name: Build executable
       run: |
-        pyinstaller --onefile --windowed --name "WorkTime" --add-data "config/*;config/" work_time3.1.0.py
+        pyinstaller --onefile --windowed --name "WorkTime" --add-data "config;config" work_time3.1.0.py
         
-    - name: Test executable
+    - name: Verify executable
       run: |
-        # Проверяем что EXE файл создан
-        if exist dist\WorkTime.exe (
-          echo "EXE файл успешно создан"
-        ) else (
+        if (Test-Path "dist\WorkTime.exe") {
+          $file = Get-Item "dist\WorkTime.exe"
+          echo "EXE создан успешно, размер: $($file.Length / 1MB) MB"
+        } else {
           echo "Ошибка: EXE файл не найден"
           exit 1
-        )
+        }
         
     - name: Create release package
       run: |
         $version = "${{ github.ref_name }}" -replace 'v',''
         mkdir "WorkTime_$version"
-        copy dist\WorkTime.exe "WorkTime_$version"
-        if exist config (xcopy config "WorkTime_$version\config" /E /I)
-        copy README.md "WorkTime_$version"
-        7z a "WorkTime_$version.zip" "WorkTime_$version\*"
+        copy dist\WorkTime.exe "WorkTime_$version\"
+        if (Test-Path "config") {
+          xcopy config "WorkTime_$version\config" /E /I
+        }
+        7z a "WorkTime_${{ github.ref_name }}.zip" "WorkTime_$version\*"
         
     - name: Upload release
       uses: softprops/action-gh-release@v1
@@ -52,8 +54,9 @@ jobs:
         body: |
           Автоматически собранная версия ${{ github.ref_name }}
           
-          Изменения:
-          - Обновление системы обновлений
+          Изменения в этой версии:
+          - Добавлена система автоматических обновлений
+          - Исправлены ошибки отображения дат
           - Улучшена производительность
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
